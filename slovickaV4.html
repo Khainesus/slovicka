@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1510">
+<title>Slovíčka</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: linear-gradient(160deg, #1a1510 0%, #231d14 50%, #1a1510 100%); min-height: 100vh; font-family: Georgia, 'Times New Roman', serif; color: #e8d5b0; display: flex; justify-content: center; }
+#app { width: 100%; max-width: 420px; min-height: 100vh; display: flex; flex-direction: column; }
+.screen { display: none; flex-direction: column; flex: 1; padding-bottom: 40px; overflow-y: auto; }
+.screen.active { display: flex; }
+.header { padding: 40px 24px 20px; border-bottom: 1px solid rgba(244,201,122,0.15); margin-bottom: 8px; }
+.day-badge { display: inline-block; background: rgba(244,201,122,0.15); border: 1px solid rgba(244,201,122,0.3); color: #f4c97a; font-size: 11px; letter-spacing: 3px; padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; }
+.title { color: #e8d5b0; font-size: 32px; font-weight: normal; letter-spacing: 1px; }
+.subtitle { color: #7a6a50; font-size: 14px; margin-top: 4px; }
+.review-banner { margin: 8px 20px; padding: 12px 16px; background: rgba(244,201,122,0.08); border: 1px solid rgba(244,201,122,0.25); border-radius: 12px; display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.section { padding: 16px 20px 4px; }
+.section-label { color: #5a4a30; font-size: 11px; letter-spacing: 3px; margin-bottom: 10px; }
+.mode-btn { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 8px; cursor: pointer; color: #e8d5b0; text-align: left; font-family: Georgia, serif; transition: background 0.15s; }
+.mode-btn:active { background: rgba(255,255,255,0.07); }
+.mode-btn:disabled { opacity: 0.35; cursor: default; }
+.mode-btn .icon { font-size: 22px; width: 32px; text-align: center; }
+.mode-btn .btn-text { flex: 1; }
+.mode-btn .btn-label { color: #e8d5b0; font-size: 16px; }
+.mode-btn .btn-sub { color: #7a6a50; font-size: 12px; margin-top: 2px; }
+.mode-btn .arrow { color: #5a4a30; font-size: 22px; }
+.day-btn { background: transparent; border: 1px dashed rgba(244,201,122,0.2); border-radius: 10px; color: #7a6a50; padding: 10px; font-size: 13px; cursor: pointer; font-family: Georgia, serif; flex: 1; }
+.top-bar { display: flex; align-items: center; padding: 16px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+.back-btn { background: none; border: none; color: #f4c97a; font-size: 32px; line-height: 1; cursor: pointer; padding: 0 12px; font-family: serif; }
+.top-bar-title { flex: 1; text-align: center; color: #e8d5b0; font-size: 18px; }
+.tabs { display: flex; margin: 16px 20px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+.tab { flex: 1; padding: 10px; background: transparent; border: none; color: #7a6a50; font-size: 15px; cursor: pointer; font-family: Georgia, serif; }
+.tab.active { background: rgba(244,201,122,0.12); color: #f4c97a; }
+.form { padding: 16px 20px; }
+label { color: #9a8a70; font-size: 13px; display: block; margin-bottom: 6px; letter-spacing: 1px; }
+input, textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 14px; color: #e8d5b0; font-size: 16px; font-family: Georgia, serif; margin-bottom: 16px; outline: none; -webkit-appearance: none; }
+textarea { height: 140px; resize: none; }
+input.correct { border-color: #7ed99a; background: rgba(126,217,154,0.08); }
+input.wrong { border-color: #e07070; background: rgba(224,112,112,0.08); }
+.autocomplete-wrap { position: relative; }
+.autocomplete-wrap input { margin-bottom: 0; }
+.autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #2a2218; border: 1px solid rgba(244,201,122,0.25); border-top: none; border-radius: 0 0 10px 10px; z-index: 100; max-height: 160px; overflow-y: auto; }
+.autocomplete-item { padding: 10px 14px; cursor: pointer; color: #e8d5b0; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.autocomplete-item:active { background: rgba(244,201,122,0.1); }
+.cat-spacer { margin-bottom: 16px; }
+.filter-wrap { padding: 12px 20px 4px; display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #9a8a70; font-size: 13px; cursor: pointer; font-family: Georgia, serif; display: flex; align-items: center; gap: 6px; }
+.filter-pill.active { border-color: rgba(244,201,122,0.4); background: rgba(244,201,122,0.1); color: #f4c97a; }
+.filter-pill .pill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.preview { background: rgba(244,201,122,0.05); border: 1px solid rgba(244,201,122,0.15); border-radius: 10px; padding: 12px 14px; margin: 8px 0 16px; font-size: 14px; }
+.preview-label { color: #7a6a50; font-size: 12px; margin-bottom: 6px; }
+.primary-btn { display: block; width: calc(100% - 40px); margin: 8px 20px; background: linear-gradient(135deg, #f4c97a, #d4a950); border: none; border-radius: 14px; padding: 16px; color: #1a1510; font-size: 17px; font-family: Georgia, serif; font-weight: bold; cursor: pointer; letter-spacing: 0.5px; }
+.primary-btn:active { opacity: 0.85; }
+.danger-btn { display: block; width: calc(100% - 40px); margin: 8px 20px; background: rgba(224,112,112,0.12); border: 1px solid rgba(224,112,112,0.3); border-radius: 14px; padding: 14px; color: #e07070; font-size: 16px; font-family: Georgia, serif; cursor: pointer; }
+.secondary-btn { display: block; width: calc(100% - 40px); margin: 8px 20px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 14px; color: #9a8a70; font-size: 16px; font-family: Georgia, serif; cursor: pointer; }
+.error-msg { color: #e07070; text-align: center; font-size: 14px; margin: 0 20px 8px; }
+.success-msg { color: #7ed99a; text-align: center; font-size: 14px; margin: 0 20px 8px; }
+.progress-wrap { height: 3px; background: rgba(255,255,255,0.06); flex-shrink: 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #f4c97a, #d4a950); transition: width 0.3s; }
+.exercise-area { flex: 1; display: flex; flex-direction: column; padding: 24px 20px; }
+.hint { text-align: center; color: #9a8a70; font-size: 13px; margin-bottom: 8px; }
+
+/* Direction picker */
+.dir-picker { display: flex; gap: 8px; margin: 12px 20px 0; }
+.dir-btn { flex: 1; padding: 9px 6px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #9a8a70; font-size: 13px; cursor: pointer; font-family: Georgia, serif; text-align: center; }
+.dir-btn.active { border-color: rgba(244,201,122,0.4); background: rgba(244,201,122,0.1); color: #f4c97a; }
+
+.card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; min-height: 200px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 16px; transition: background 0.2s, border-color 0.2s; }
+.card.flipped { background: rgba(244,201,122,0.06); border-color: rgba(244,201,122,0.25); }
+.card-content { text-align: center; padding: 24px; }
+.card-lang { color: #7a6a50; font-size: 13px; margin-bottom: 12px; letter-spacing: 2px; }
+.card-word { color: #e8d5b0; font-size: 34px; line-height: 1.2; }
+.card-cat { color: #7a6a50; font-size: 12px; margin-top: 10px; min-height: 18px; }
+.rating-row { display: flex; gap: 12px; margin-top: 8px; }
+.rating-btn { flex: 1; padding: 16px; border: none; border-radius: 14px; font-size: 16px; font-family: Georgia, serif; cursor: pointer; font-weight: bold; }
+.wrong-btn { background: rgba(224,112,112,0.15); color: #e07070; border: 1px solid rgba(224,112,112,0.3); }
+.correct-btn { background: rgba(126,217,154,0.15); color: #7ed99a; border: 1px solid rgba(126,217,154,0.3); }
+.fill-prompt { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 8px; }
+.card-word-fill { color: #e8d5b0; font-size: 30px; line-height: 1.2; }
+#fill-input, #test-input { text-align: center; font-size: 22px; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+.option-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 18px 10px; color: #e8d5b0; font-size: 16px; font-family: Georgia, serif; cursor: pointer; min-height: 70px; transition: all 0.2s; }
+.option-btn.correct-opt { background: rgba(126,217,154,0.15); border-color: rgba(126,217,154,0.4); color: #7ed99a; }
+.option-btn.wrong-opt { background: rgba(224,112,112,0.15); border-color: rgba(224,112,112,0.4); color: #e07070; }
+.result-box { padding: 40px 20px 20px; text-align: center; }
+.result-score { color: #f4c97a; font-size: 72px; line-height: 1; margin-bottom: 12px; }
+.result-detail { font-size: 20px; margin-bottom: 32px; }
+.stat-row { margin-bottom: 10px; padding: 12px 14px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+.stat-word { margin-bottom: 6px; font-size: 14px; display: flex; align-items: center; gap: 7px; }
+.stat-bar-wrap { height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.stat-bar { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.stat-pct { color: #7a6a50; font-size: 12px; text-align: right; }
+.wrong-row { padding: 10px 14px; background: rgba(224,112,112,0.06); border: 1px solid rgba(224,112,112,0.15); border-radius: 10px; margin-bottom: 8px; font-size: 15px; }
+.stats-content { padding: 0 20px 20px; }
+.word-list { padding: 8px 20px 20px; }
+.word-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
+.word-item:active { background: rgba(255,255,255,0.06); }
+.word-item-text { flex: 1; min-width: 0; }
+.word-item-en { color: #f4c97a; font-size: 15px; }
+.word-item-cs { color: #9a8a70; font-size: 13px; margin-top: 2px; }
+.word-item-cat { font-size: 11px; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+.cat-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
+.cat-item:active { background: rgba(255,255,255,0.06); }
+.cat-item-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.cat-item-text { flex: 1; }
+.cat-item-name { color: #e8d5b0; font-size: 16px; }
+.cat-item-count { color: #7a6a50; font-size: 12px; margin-top: 2px; }
+.hidden { display: none !important; }
+.color-gold { color: #f4c97a; } .color-muted { color: #9a8a70; } .color-green { color: #7ed99a; } .color-red { color: #e07070; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+.modal-overlay.hidden { display: none; }
+.modal-sheet { background: #231d14; border-radius: 20px 20px 0 0; width: 100%; max-width: 420px; padding: 24px 20px 40px; border-top: 1px solid rgba(244,201,122,0.2); max-height: 80vh; overflow-y: auto; }
+.modal-title { color: #e8d5b0; font-size: 18px; margin-bottom: 16px; text-align: center; }
+.modal-subtitle { color: #9a8a70; font-size: 14px; text-align: center; margin-bottom: 20px; line-height: 1.5; }
+.modal-option { padding: 14px 16px; border-radius: 12px; cursor: pointer; color: #e8d5b0; font-size: 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.modal-option:active { background: rgba(255,255,255,0.07); }
+.opt-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.modal-form input { margin-bottom: 12px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+.modal-actions button { flex: 1; padding: 13px; border-radius: 12px; font-size: 15px; font-family: Georgia, serif; cursor: pointer; border: none; }
+.modal-btn-cancel { background: rgba(255,255,255,0.06); color: #9a8a70; }
+.modal-btn-confirm { background: linear-gradient(135deg, #f4c97a, #d4a950); color: #1a1510; font-weight: bold; }
+.modal-btn-danger { background: rgba(224,112,112,0.15); color: #e07070; border: 1px solid rgba(224,112,112,0.3) !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="header">
+    <div class="day-badge" id="home-day-badge">DEN 1</div>
+    <div class="title">Slovíčka</div>
+    <div class="subtitle" id="home-word-count">0 slov celkem</div>
+  </div>
+  <div id="review-banner" class="review-banner hidden">
+    <span style="font-size:20px">🔁</span>
+    <span><strong id="review-count">0</strong> slovíček čeká na opakování</span>
+  </div>
+  <div class="section">
+    <div class="section-label">PROCVIČOVÁNÍ</div>
+    <button class="mode-btn" id="btn-flashcard" disabled>
+      <span class="icon">🃏</span>
+      <div class="btn-text"><div class="btn-label">Kartičky</div><div class="btn-sub" id="sub-flashcard">otočit a hodnotit</div></div>
+      <span class="arrow">›</span>
+    </button>
+    <button class="mode-btn" id="btn-fill" disabled>
+      <span class="icon">✏️</span>
+      <div class="btn-text"><div class="btn-label">Doplňovačka</div><div class="btn-sub" id="sub-fill">napsat překlad</div></div>
+      <span class="arrow">›</span>
+    </button>
+    <button class="mode-btn" id="btn-drag" disabled>
+      <span class="icon">🔀</span>
+      <div class="btn-text"><div class="btn-label">Párování</div><div class="btn-sub">vyber správný překlad</div></div>
+      <span class="arrow">›</span>
+    </button>
+  </div>
+  <div class="section">
+    <div class="section-label">SPRÁVA</div>
+    <button class="mode-btn" id="btn-add">
+      <span class="icon">➕</span>
+      <div class="btn-text"><div class="btn-label">Přidat slovíčka</div><div class="btn-sub">ručně nebo seznam</div></div>
+      <span class="arrow">›</span>
+    </button>
+    <button class="mode-btn" id="btn-wordlist">
+      <span class="icon">📝</span>
+      <div class="btn-text"><div class="btn-label">Správa slovíček</div><div class="btn-sub">upravit nebo smazat</div></div>
+      <span class="arrow">›</span>
+    </button>
+    <button class="mode-btn" id="btn-categories">
+      <span class="icon">🏷️</span>
+      <div class="btn-text"><div class="btn-label">Kategorie</div><div class="btn-sub" id="sub-categories">spravovat kategorie</div></div>
+      <span class="arrow">›</span>
+    </button>
+  </div>
+  <div class="section">
+    <div class="section-label">OSTATNÍ</div>
+    <button class="mode-btn" id="btn-stats" disabled>
+      <span class="icon">📊</span>
+      <div class="btn-text"><div class="btn-label">Statistiky</div><div class="btn-sub">chybovost a přehled</div></div>
+      <span class="arrow">›</span>
+    </button>
+    <button class="mode-btn" id="btn-test" disabled>
+      <span class="icon">🎯</span>
+      <div class="btn-text"><div class="btn-label">Test všech slov</div><div class="btn-sub" id="sub-test">celkové shrnutí</div></div>
+      <span class="arrow">›</span>
+    </button>
+    <button class="mode-btn" id="btn-backup">
+      <span class="icon">💾</span>
+      <div class="btn-text"><div class="btn-label">Záloha</div><div class="btn-sub">export a import</div></div>
+      <span class="arrow">›</span>
+    </button>
+  </div>
+  <div style="display:flex;gap:8px;margin:16px 20px 0">
+    <button class="day-btn" id="btn-back-day">← Den zpět</button>
+    <button class="day-btn" id="btn-advance-day">Den vpřed →</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-category" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title">Vybrat kategorii</div>
+    <div id="modal-cat-options"></div>
+  </div>
+</div>
+
+<div id="modal-direction" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title">Směr překladu</div>
+    <div id="modal-dir-options"></div>
+  </div>
+</div>
+
+<div id="modal-edit" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title">Upravit slovíčko</div>
+    <div class="modal-form">
+      <label>Anglicky</label>
+      <input type="text" id="edit-en" autocomplete="off" autocorrect="off" autocapitalize="off">
+      <label>Česky</label>
+      <input type="text" id="edit-cs" autocomplete="off" autocorrect="off">
+      <label>Kategorie <span style="color:#5a4a30">(volitelné)</span></label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="edit-cat" autocomplete="off" autocorrect="off" autocapitalize="words">
+        <div class="autocomplete-list hidden" id="edit-ac-list"></div>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="modal-btn-cancel" onclick="closeModal('modal-edit')">Zrušit</button>
+      <button class="modal-btn-confirm" id="edit-save-btn">Uložit</button>
+    </div>
+    <button class="danger-btn" id="edit-delete-btn" style="margin-top:8px">🗑 Smazat slovíčko</button>
+  </div>
+</div>
+
+<div id="modal-confirm" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title" id="confirm-title">Opravdu smazat?</div>
+    <div class="modal-subtitle" id="confirm-body"></div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="closeModal('modal-confirm')">Zrušit</button>
+      <button class="modal-btn-danger" id="confirm-ok-btn">Smazat</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-delete-cat" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title" id="del-cat-title">Smazat kategorii</div>
+    <div class="modal-subtitle" id="del-cat-body"></div>
+    <button class="secondary-btn" id="del-cat-only-btn" style="margin-bottom:4px">Smazat jen kategorii<br><span style="font-size:12px;color:#7a6a50">slovíčka zůstanou bez kategorie</span></button>
+    <button class="danger-btn" id="del-cat-all-btn">Smazat i všechna slovíčka</button>
+    <button class="secondary-btn" onclick="closeModal('modal-delete-cat')" style="margin-top:4px">Zrušit</button>
+  </div>
+</div>
+
+<div id="modal-rename-cat" class="modal-overlay hidden">
+  <div class="modal-sheet">
+    <div class="modal-title">Přejmenovat kategorii</div>
+    <div class="modal-form">
+      <label>Nový název</label>
+      <input type="text" id="rename-cat-input" autocomplete="off" autocorrect="off" autocapitalize="words">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="closeModal('modal-rename-cat')">Zrušit</button>
+      <button class="modal-btn-confirm" id="rename-cat-save-btn">Přejmenovat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD -->
+<div id="screen-add" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Přidat slovíčka</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-single" onclick="switchTab('single')">Jedno</button>
+    <button class="tab" id="tab-bulk" onclick="switchTab('bulk')">Seznam</button>
+  </div>
+  <div class="form" id="form-single">
+    <label>Anglicky</label>
+    <input type="text" id="input-en" placeholder="cat" autocomplete="off" autocorrect="off" autocapitalize="off">
+    <label>Česky</label>
+    <input type="text" id="input-cs" placeholder="kočka" autocomplete="off" autocorrect="off">
+    <label>Kategorie <span style="color:#5a4a30">(volitelné)</span></label>
+    <div class="autocomplete-wrap">
+      <input type="text" id="input-cat" placeholder="např. Zvířata" autocomplete="off" autocorrect="off" autocapitalize="words">
+      <div class="autocomplete-list hidden" id="autocomplete-list"></div>
+    </div>
+    <div class="cat-spacer"></div>
+  </div>
+  <div class="form hidden" id="form-bulk">
+    <label>Formát: <strong>anglicky=česky</strong> nebo <strong>anglicky=česky|kategorie</strong></label>
+    <textarea id="input-bulk" placeholder="cat=kočka|Zvířata&#10;dog=pes|Zvířata&#10;house=dům"></textarea>
+    <div id="bulk-preview" class="preview hidden"></div>
+  </div>
+  <div class="error-msg hidden" id="add-error"></div>
+  <button class="primary-btn" id="btn-do-add">Přidat</button>
+</div>
+
+<!-- WORD LIST -->
+<div id="screen-wordlist" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Správa slovíček</div>
+    <div style="width:40px"></div>
+  </div>
+  <div id="wordlist-filter" class="filter-wrap"></div>
+  <div class="word-list" id="word-list-content"></div>
+</div>
+
+<!-- CATEGORIES -->
+<div id="screen-categories" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Kategorie</div>
+    <div style="width:40px"></div>
+  </div>
+  <div style="padding:16px 20px" id="cat-list-content"></div>
+</div>
+
+<!-- BACKUP -->
+<div id="screen-backup" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Záloha</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="form">
+    <div style="color:#9a8a70;font-size:14px;margin-bottom:20px;line-height:1.6">Exportuj slovíčka jako text a ulož si je. Pro import vlož text zpět a potvrď.</div>
+    <label>Export / Import dat</label>
+    <textarea id="backup-textarea" placeholder="Zde se zobrazí nebo vloží záloha..." style="height:200px;font-size:13px;font-family:monospace"></textarea>
+  </div>
+  <div class="error-msg hidden" id="backup-error"></div>
+  <div class="success-msg hidden" id="backup-success"></div>
+  <button class="primary-btn" id="btn-export">📤 Exportovat</button>
+  <button class="secondary-btn" id="btn-import">📥 Importovat ze zálohy</button>
+</div>
+
+<!-- FLASHCARD -->
+<div id="screen-flashcard" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Kartičky</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="fc-progress"></div></div>
+  <div class="exercise-area">
+    <div class="hint">Klepnutím otočíš kartičku · otáčet lze opakovaně</div>
+    <div class="card" id="fc-card">
+      <div class="card-content">
+        <div class="card-lang" id="fc-lang"></div>
+        <div class="card-word" id="fc-word"></div>
+        <div class="card-cat" id="fc-cat"></div>
+      </div>
+    </div>
+    <div class="rating-row hidden" id="fc-rating">
+      <button class="rating-btn wrong-btn" id="fc-wrong">✗ Nevím</button>
+      <button class="rating-btn correct-btn" id="fc-correct">✓ Umím</button>
+    </div>
+  </div>
+</div>
+
+<!-- FILL -->
+<div id="screen-fill" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Doplňovačka</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="fill-progress"></div></div>
+  <div class="exercise-area">
+    <div class="fill-prompt">
+      <div class="card-lang" id="fill-prompt-lang"></div>
+      <div class="card-word-fill" id="fill-cs-word"></div>
+      <div class="card-cat" id="fill-cat"></div>
+    </div>
+    <input type="text" id="fill-input" placeholder="napište překlad..." autocomplete="off" autocorrect="off" autocapitalize="off">
+    <div class="hidden" id="fill-feedback"></div>
+    <button class="primary-btn" id="fill-submit-btn">Zkontrolovat</button>
+    <button class="primary-btn hidden" id="fill-next-btn">Další →</button>
+  </div>
+</div>
+
+<!-- DRAG -->
+<div id="screen-drag" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Párování</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="drag-progress"></div></div>
+  <div class="exercise-area">
+    <div class="fill-prompt">
+      <div class="card-lang" id="drag-prompt-lang"></div>
+      <div class="card-word" id="drag-question-word"></div>
+    </div>
+    <div class="options-grid" id="drag-options"></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="screen-stats" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Statistiky</div>
+    <div style="width:40px"></div>
+  </div>
+  <div id="stats-filter" class="filter-wrap"></div>
+  <div class="stats-content" id="stats-content"></div>
+</div>
+
+<!-- TEST -->
+<div id="screen-test" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title" id="test-title">Test</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="test-progress"></div></div>
+  <div class="exercise-area">
+    <div class="fill-prompt">
+      <div class="card-lang">🇨🇿 Přelož do angličtiny:</div>
+      <div class="card-word-fill" id="test-cs-word"></div>
+      <div class="card-cat" id="test-cat"></div>
+    </div>
+    <input type="text" id="test-input" placeholder="napište anglicky..." autocomplete="off" autocorrect="off" autocapitalize="off">
+    <div class="hidden" id="test-feedback"></div>
+    <button class="primary-btn" id="test-submit-btn">Zkontrolovat</button>
+    <button class="primary-btn hidden" id="test-next-btn">Další →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" data-back="home">‹</button>
+    <div class="top-bar-title">Hotovo!</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="result-box">
+    <div class="result-score" id="res-score">0%</div>
+    <div class="result-detail" id="res-detail"></div>
+    <button class="primary-btn" onclick="showScreen('home');updateHome();">Zpět domů</button>
+  </div>
+  <div class="stats-content" id="res-wrong-list"></div>
+</div>
+
+</div>
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'vocab_app_v2';
+function freshState() { return { words: [], currentDay: 1, nextId: 1 }; }
+function loadState() {
+  try {
+    const r = localStorage.getItem(STORAGE_KEY);
+    if (r) return JSON.parse(r);
+    const old = localStorage.getItem('vocab_app_v1');
+    if (old) { const s = JSON.parse(old); s.words.forEach(w => { if (!w.category) w.category = ''; }); return s; }
+    return freshState();
+  } catch { return freshState(); }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+let state = loadState();
+
+// ── Colors ────────────────────────────────────────────────────────────────────
+const CAT_COLORS = ['#f4c97a','#7ed99a','#7ab8f4','#f47ab8','#c97af4','#f4a07a','#7af4e8','#a0f47a','#f4e07a','#7af4b8'];
+const catColorMap = {};
+function getCatColor(cat) {
+  if (!cat) return '#5a4a30';
+  if (!catColorMap[cat]) {
+    const used = Object.values(catColorMap);
+    const avail = CAT_COLORS.filter(c => !used.includes(c));
+    catColorMap[cat] = avail.length > 0 ? avail[0] : CAT_COLORS[Object.keys(catColorMap).length % CAT_COLORS.length];
+  }
+  return catColorMap[cat];
+}
+function getCategories() { return [...new Set(state.words.map(w => w.category).filter(Boolean))]; }
+function catDotHtml(cat) {
+  if (!cat) return '';
+  return `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getCatColor(cat)};margin-right:5px;vertical-align:middle"></span>${cat}`;
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function shouldReview(w) { return !w.nextReviewDay || state.currentDay >= w.nextReviewDay; }
+function updateInterval(word, correct) {
+  word.stats.seen = (word.stats.seen||0)+1;
+  if (correct) word.stats.correct = (word.stats.correct||0)+1;
+  const acc = word.stats.correct / word.stats.seen;
+  word.interval = correct ? Math.round((word.interval||1)*(1.2+acc)) : 1;
+  word.nextReviewDay = state.currentDay + word.interval;
+  saveState();
+}
+function getWordsForPractice(cat) {
+  let words = cat ? state.words.filter(w => w.category===cat) : state.words;
+  const rev = words.filter(w => shouldReview(w));
+  return rev.length > 0 ? rev : words;
+}
+// For a word, get question and answer based on direction
+// direction: 'en2cs' | 'cs2en' | 'mix'
+function getQA(word, direction) {
+  const d = direction === 'mix' ? (Math.random() < 0.5 ? 'en2cs' : 'cs2en') : direction;
+  if (d === 'en2cs') return { q: word.en, a: word.cs, qLang: '🇬🇧 EN', aLang: '🇨🇿 CS', dir: d };
+  else return { q: word.cs, a: word.en, qLang: '🇨🇿 CS', aLang: '🇬🇧 EN', dir: d };
+}
+
+// ── Screens ───────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ── Home ──────────────────────────────────────────────────────────────────────
+function updateHome() {
+  const {words, currentDay} = state;
+  document.getElementById('home-day-badge').textContent = 'DEN ' + currentDay;
+  document.getElementById('home-word-count').textContent = words.length + ' slov celkem';
+  const rev = words.filter(w => shouldReview(w));
+  const banner = document.getElementById('review-banner');
+  if (rev.length > 0) { banner.classList.remove('hidden'); document.getElementById('review-count').textContent = rev.length; }
+  else banner.classList.add('hidden');
+  const has = words.length > 0;
+  ['btn-flashcard','btn-fill','btn-drag','btn-stats'].forEach(id => document.getElementById(id).disabled = !has);
+  document.getElementById('btn-test').disabled = words.length < 2;
+  const cats = getCategories();
+  document.getElementById('sub-categories').textContent = cats.length > 0 ? cats.length + ' kategorií' : 'spravovat kategorie';
+}
+
+document.getElementById('btn-add').onclick = () => { showScreen('add'); resetAddForm(); };
+document.getElementById('btn-wordlist').onclick = () => { showScreen('wordlist'); renderWordList(null); };
+document.getElementById('btn-categories').onclick = () => { showScreen('categories'); renderCategoryList(); };
+document.getElementById('btn-stats').onclick = () => { showScreen('stats'); renderStats(null); };
+document.getElementById('btn-backup').onclick = () => { showScreen('backup'); document.getElementById('backup-textarea').value=''; ['backup-error','backup-success'].forEach(id=>document.getElementById(id).classList.add('hidden')); };
+document.getElementById('btn-advance-day').onclick = () => { state.currentDay++; saveState(); updateHome(); };
+document.getElementById('btn-back-day').onclick = () => { if(state.currentDay>1){state.currentDay--;saveState();updateHome();} };
+document.getElementById('btn-flashcard').onclick = () => openCatModal('flashcard');
+document.getElementById('btn-fill').onclick = () => openCatModal('fill');
+document.getElementById('btn-drag').onclick = () => openCatModal('drag');
+document.getElementById('btn-test').onclick = () => openCatModal('test');
+document.querySelectorAll('.back-btn').forEach(btn => btn.onclick = () => { showScreen(btn.dataset.back); updateHome(); });
+
+// ── Category Modal ────────────────────────────────────────────────────────────
+let pendingMode = null, pendingCat = null;
+function openCatModal(mode) {
+  const cats = getCategories();
+  if (cats.length === 0) { openDirModal(mode, null); return; }
+  pendingMode = mode;
+  const c = document.getElementById('modal-cat-options'); c.innerHTML = '';
+  const all = document.createElement('div'); all.className='modal-option';
+  all.innerHTML = `<div class="opt-dot" style="background:#5a4a30"></div>Všechna slovíčka<span style="color:#5a4a30;font-size:13px;margin-left:auto">${state.words.length}</span>`;
+  all.onclick = () => { closeModal('modal-category'); openDirModal(mode, null); };
+  c.appendChild(all);
+  cats.forEach(cat => {
+    const count = state.words.filter(w=>w.category===cat).length;
+    const d = document.createElement('div'); d.className='modal-option';
+    d.innerHTML = `<div class="opt-dot" style="background:${getCatColor(cat)}"></div>${cat}<span style="color:#5a4a30;font-size:13px;margin-left:auto">${count}</span>`;
+    d.onclick = () => { closeModal('modal-category'); openDirModal(mode, cat); };
+    c.appendChild(d);
+  });
+  document.getElementById('modal-category').classList.remove('hidden');
+}
+document.getElementById('modal-category').onclick = e => { if(e.target===document.getElementById('modal-category')) closeModal('modal-category'); };
+
+// ── Direction Modal ───────────────────────────────────────────────────────────
+function openDirModal(mode, cat) {
+  // Test always CS→EN, skip direction modal
+  if (mode === 'test') { startTest(cat); return; }
+  const c = document.getElementById('modal-dir-options'); c.innerHTML = '';
+  const dirs = [
+    { id:'en2cs', label:'🇬🇧 → 🇨🇿', sub:'vidíš angličtinu, píšeš/hádáš češtinu' },
+    { id:'cs2en', label:'🇨🇿 → 🇬🇧', sub:'vidíš češtinu, píšeš/hádáš angličtinu' },
+    { id:'mix',   label:'🔀 Mix',      sub:'náhodně střídá oba směry' },
+  ];
+  dirs.forEach(dir => {
+    const d = document.createElement('div'); d.className='modal-option';
+    d.innerHTML = `<div style="flex:1"><div style="font-size:17px">${dir.label}</div><div style="color:#7a6a50;font-size:13px;margin-top:2px">${dir.sub}</div></div>`;
+    d.onclick = () => { closeModal('modal-direction'); mode==='flashcard'?startPractice('flashcard',cat,dir.id):mode==='fill'?startPractice('fill',cat,dir.id):startPractice('drag',cat,dir.id); };
+    c.appendChild(d);
+  });
+  document.getElementById('modal-direction').classList.remove('hidden');
+}
+document.getElementById('modal-direction').onclick = e => { if(e.target===document.getElementById('modal-direction')) closeModal('modal-direction'); };
+
+// ── Edit Word Modal ───────────────────────────────────────────────────────────
+let editWordId = null;
+function openEditModal(wordId) {
+  const word = state.words.find(w => w.id===wordId); if(!word) return;
+  editWordId = wordId;
+  document.getElementById('edit-en').value = word.en;
+  document.getElementById('edit-cs').value = word.cs;
+  document.getElementById('edit-cat').value = word.category || '';
+  document.getElementById('edit-ac-list').classList.add('hidden');
+  document.getElementById('modal-edit').classList.remove('hidden');
+}
+document.getElementById('modal-edit').onclick = e => { if(e.target===document.getElementById('modal-edit')) closeModal('modal-edit'); };
+const editCatInput = document.getElementById('edit-cat');
+const editAcList = document.getElementById('edit-ac-list');
+function renderAcInto(input, el, matches) {
+  if(matches.length===0){el.classList.add('hidden');return;}
+  el.innerHTML='';
+  matches.forEach(cat=>{
+    const item=document.createElement('div');item.className='autocomplete-item';
+    item.innerHTML=`<div style="width:8px;height:8px;border-radius:50%;background:${getCatColor(cat)};flex-shrink:0"></div>${cat}`;
+    item.onmousedown=e=>{e.preventDefault();input.value=cat;el.classList.add('hidden');};
+    item.ontouchend=e=>{e.preventDefault();input.value=cat;el.classList.add('hidden');};
+    el.appendChild(item);
+  });
+  el.classList.remove('hidden');
+}
+editCatInput.addEventListener('input',()=>{const v=editCatInput.value.trim().toLowerCase();const cats=getCategories();renderAcInto(editCatInput,editAcList,v?cats.filter(c=>c.toLowerCase().includes(v)):cats);});
+editCatInput.addEventListener('focus',()=>{const cats=getCategories();if(cats.length>0)renderAcInto(editCatInput,editAcList,cats);});
+document.getElementById('edit-save-btn').onclick = () => {
+  const en=document.getElementById('edit-en').value.trim(), cs=document.getElementById('edit-cs').value.trim(), cat=document.getElementById('edit-cat').value.trim();
+  if(!en||!cs) return;
+  const word=state.words.find(w=>w.id===editWordId); if(!word) return;
+  if(cat) getCatColor(cat);
+  word.en=en; word.cs=cs; word.category=cat;
+  saveState(); closeModal('modal-edit');
+  if(document.getElementById('screen-wordlist').classList.contains('active')) renderWordList(wordlistFilter);
+  if(document.getElementById('screen-categories').classList.contains('active')) renderCategoryList();
+  updateHome();
+};
+document.getElementById('edit-delete-btn').onclick = () => {
+  const word=state.words.find(w=>w.id===editWordId); if(!word) return;
+  closeModal('modal-edit');
+  showConfirm(`Smazat "${word.en}"?`, 'Toto slovíčko bude trvale odstraněno.', () => {
+    state.words=state.words.filter(w=>w.id!==editWordId); saveState(); updateHome();
+    if(document.getElementById('screen-wordlist').classList.contains('active')) renderWordList(wordlistFilter);
+  });
+};
+
+// ── Confirm Modal ─────────────────────────────────────────────────────────────
+function showConfirm(title, body, onConfirm) {
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-body').textContent=body;
+  document.getElementById('confirm-ok-btn').onclick=()=>{closeModal('modal-confirm');onConfirm();};
+  document.getElementById('modal-confirm').classList.remove('hidden');
+}
+document.getElementById('modal-confirm').onclick=e=>{if(e.target===document.getElementById('modal-confirm'))closeModal('modal-confirm');};
+
+// ── Delete Category Modal ─────────────────────────────────────────────────────
+function openDeleteCatModal(cat) {
+  const count = state.words.filter(w=>w.category===cat).length;
+  document.getElementById('del-cat-title').textContent = `Smazat "${cat}"`;
+  document.getElementById('del-cat-body').textContent = `Kategorie obsahuje ${count} slovíček.`;
+  document.getElementById('del-cat-only-btn').onclick = () => {
+    state.words.forEach(w=>{if(w.category===cat) w.category='';});
+    delete catColorMap[cat]; saveState(); closeModal('modal-delete-cat'); renderCategoryList(); updateHome();
+  };
+  document.getElementById('del-cat-all-btn').onclick = () => {
+    closeModal('modal-delete-cat');
+    showConfirm(`Smazat kategorii i ${count} slovíček?`, 'Tato akce je nevratná.', () => {
+      state.words=state.words.filter(w=>w.category!==cat);
+      delete catColorMap[cat]; saveState(); renderCategoryList(); updateHome();
+    });
+  };
+  document.getElementById('modal-delete-cat').classList.remove('hidden');
+}
+document.getElementById('modal-delete-cat').onclick=e=>{if(e.target===document.getElementById('modal-delete-cat'))closeModal('modal-delete-cat');};
+
+// ── Rename Category ───────────────────────────────────────────────────────────
+let renameCatTarget = null;
+function openRenameCat(cat) {
+  renameCatTarget=cat;
+  document.getElementById('rename-cat-input').value=cat;
+  document.getElementById('modal-rename-cat').classList.remove('hidden');
+}
+document.getElementById('modal-rename-cat').onclick=e=>{if(e.target===document.getElementById('modal-rename-cat'))closeModal('modal-rename-cat');};
+document.getElementById('rename-cat-save-btn').onclick=()=>{
+  const newName=document.getElementById('rename-cat-input').value.trim();
+  if(!newName||!renameCatTarget) return;
+  if(newName!==renameCatTarget){
+    const oldColor=catColorMap[renameCatTarget];
+    state.words.forEach(w=>{if(w.category===renameCatTarget) w.category=newName;});
+    delete catColorMap[renameCatTarget];
+    if(oldColor) catColorMap[newName]=oldColor;
+    saveState();
+  }
+  closeModal('modal-rename-cat'); renderCategoryList(); updateHome();
+};
+
+// ── Word List ─────────────────────────────────────────────────────────────────
+let wordlistFilter = null;
+function renderWordList(filterCat) {
+  wordlistFilter=filterCat;
+  const cats=getCategories();
+  const fw=document.getElementById('wordlist-filter'); fw.innerHTML='';
+  if(cats.length>0){
+    const all=document.createElement('button'); all.className='filter-pill'+(filterCat===null?' active':''); all.textContent='Vše';
+    all.onclick=()=>renderWordList(null); fw.appendChild(all);
+    const uncat=state.words.filter(w=>!w.category);
+    if(uncat.length>0){const p=document.createElement('button');p.className='filter-pill'+(filterCat===''?' active':'');p.innerHTML=`<div class="pill-dot" style="background:#5a4a30"></div>Bez kategorie`;p.onclick=()=>renderWordList('');fw.appendChild(p);}
+    cats.forEach(cat=>{const p=document.createElement('button');p.className='filter-pill'+(filterCat===cat?' active':'');p.innerHTML=`<div class="pill-dot" style="background:${getCatColor(cat)}"></div>${cat}`;p.onclick=()=>renderWordList(cat);fw.appendChild(p);});
+  }
+  let words=filterCat===null?state.words:state.words.filter(w=>w.category===filterCat);
+  const el=document.getElementById('word-list-content'); el.innerHTML='';
+  if(words.length===0){el.innerHTML='<div style="color:#9a8a70;text-align:center;padding:32px">Žádná slovíčka</div>';return;}
+  words.forEach(word=>{
+    const div=document.createElement('div'); div.className='word-item';
+    const catHtml=word.category
+      ?`<div class="word-item-cat"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${getCatColor(word.category)}"></span><span style="color:#7a6a50">${word.category}</span></div>`
+      :'<div class="word-item-cat" style="color:#5a4a30">bez kategorie</div>';
+    div.innerHTML=`<div class="word-item-text"><div class="word-item-en">${word.en}</div><div class="word-item-cs">${word.cs}</div>${catHtml}</div><span style="color:#5a4a30;font-size:20px">›</span>`;
+    div.onclick=()=>openEditModal(word.id);
+    el.appendChild(div);
+  });
+}
+
+// ── Category List ─────────────────────────────────────────────────────────────
+function renderCategoryList() {
+  const cats=getCategories();
+  const el=document.getElementById('cat-list-content'); el.innerHTML='';
+  const uncat=state.words.filter(w=>!w.category).length;
+  if(uncat>0){
+    const div=document.createElement('div'); div.className='cat-item';
+    div.innerHTML=`<div class="cat-item-dot" style="background:#5a4a30"></div><div class="cat-item-text"><div class="cat-item-name">Bez kategorie</div><div class="cat-item-count">${uncat} slov</div></div>`;
+    el.appendChild(div);
+  }
+  if(cats.length===0&&uncat===0){el.innerHTML='<div style="color:#9a8a70;text-align:center;padding:32px">Žádné kategorie</div>';return;}
+  cats.forEach(cat=>{
+    const count=state.words.filter(w=>w.category===cat).length;
+    const div=document.createElement('div'); div.className='cat-item';
+    div.innerHTML=`<div class="cat-item-dot" style="background:${getCatColor(cat)}"></div><div class="cat-item-text"><div class="cat-item-name">${cat}</div><div class="cat-item-count">${count} slov</div></div><span style="color:#5a4a30;font-size:20px">›</span>`;
+    div.onclick=()=>openCatActions(cat);
+    el.appendChild(div);
+  });
+}
+
+function openCatActions(cat) {
+  // Reuse direction modal as action sheet
+  const c=document.getElementById('modal-dir-options'); c.innerHTML='';
+  document.getElementById('modal-direction').classList.remove('hidden');
+  const actions=[
+    {label:'✏️ Přejmenovat', fn:()=>{closeModal('modal-direction');openRenameCat(cat);}},
+    {label:'🗑️ Smazat kategorii', fn:()=>{closeModal('modal-direction');openDeleteCatModal(cat);}, danger:true},
+  ];
+  actions.forEach(a=>{
+    const d=document.createElement('div'); d.className='modal-option';
+    d.innerHTML=`<div style="font-size:17px;${a.danger?'color:#e07070':''}">${a.label}</div>`;
+    d.onclick=a.fn; c.appendChild(d);
+  });
+  const cancel=document.createElement('div'); cancel.className='modal-option';
+  cancel.innerHTML='<div style="color:#7a6a50;font-size:16px">Zrušit</div>';
+  cancel.onclick=()=>closeModal('modal-direction'); c.appendChild(cancel);
+}
+
+// ── Add ───────────────────────────────────────────────────────────────────────
+let addTab='single';
+function switchTab(tab){
+  addTab=tab;
+  document.getElementById('form-single').classList.toggle('hidden',tab!=='single');
+  document.getElementById('form-bulk').classList.toggle('hidden',tab!=='bulk');
+  document.getElementById('tab-single').classList.toggle('active',tab==='single');
+  document.getElementById('tab-bulk').classList.toggle('active',tab==='bulk');
+  document.getElementById('add-error').classList.add('hidden');
+}
+function resetAddForm(){
+  ['input-en','input-cs','input-cat','input-bulk'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bulk-preview').classList.add('hidden');
+  document.getElementById('add-error').classList.add('hidden');
+  document.getElementById('autocomplete-list').classList.add('hidden');
+  switchTab('single');
+}
+const catInput=document.getElementById('input-cat');
+const acList=document.getElementById('autocomplete-list');
+catInput.addEventListener('input',()=>{const v=catInput.value.trim().toLowerCase();const cats=getCategories();renderAcInto(catInput,acList,v?cats.filter(c=>c.toLowerCase().includes(v)):cats);});
+catInput.addEventListener('focus',()=>{const cats=getCategories();if(cats.length>0)renderAcInto(catInput,acList,cats);});
+document.addEventListener('click',e=>{
+  if(!catInput.contains(e.target)&&!acList.contains(e.target)) acList.classList.add('hidden');
+  if(!editCatInput.contains(e.target)&&!editAcList.contains(e.target)) editAcList.classList.add('hidden');
+});
+function parseBulk(text){
+  return text.split('\n').map(line=>{
+    const cs=line.split('|');const cat=cs.length>=2?cs[1].trim():'';
+    const parts=cs[0].split(/[=\-,]/).map(s=>s.trim());
+    if(parts.length>=2&&parts[0]&&parts[1])return{en:parts[0],cs:parts[1],category:cat};
+    return null;
+  }).filter(Boolean);
+}
+document.getElementById('input-bulk').addEventListener('input',function(){
+  const parsed=parseBulk(this.value);
+  const preview=document.getElementById('bulk-preview');
+  if(parsed.length===0){preview.classList.add('hidden');return;}
+  preview.classList.remove('hidden');
+  preview.innerHTML='<div class="preview-label">Náhled ('+parsed.length+' slov):</div>'
+    +parsed.slice(0,5).map(w=>`<div style="color:#c8b890;margin-bottom:2px"><span style="color:#f4c97a">${w.en}</span> = ${w.cs}${w.category?` <span style="color:#7a6a50">· ${w.category}</span>`:''}</div>`).join('')
+    +(parsed.length>5?`<div class="preview-label">... a ${parsed.length-5} dalších</div>`:'');
+});
+document.getElementById('btn-do-add').onclick=()=>{
+  const err=document.getElementById('add-error');err.classList.add('hidden');
+  let toAdd=[];
+  if(addTab==='single'){
+    const en=document.getElementById('input-en').value.trim(),cs=document.getElementById('input-cs').value.trim(),cat=document.getElementById('input-cat').value.trim();
+    if(!en||!cs){err.textContent='Vyplň obě pole.';err.classList.remove('hidden');return;}
+    toAdd=[{en,cs,category:cat}];
+  } else {
+    toAdd=parseBulk(document.getElementById('input-bulk').value);
+    if(toAdd.length===0){err.textContent='Žádná validní slovíčka. Formát: cat=kočka|Zvířata';err.classList.remove('hidden');return;}
+  }
+  let id=state.nextId;
+  toAdd.forEach(w=>{if(w.category)getCatColor(w.category);state.words.push({id:id++,en:w.en,cs:w.cs,category:w.category||'',addedDay:state.currentDay,interval:1,nextReviewDay:state.currentDay+1,stats:{seen:0,correct:0}});});
+  state.nextId=id;saveState();showScreen('home');updateHome();
+};
+
+// ── Backup ────────────────────────────────────────────────────────────────────
+document.getElementById('btn-export').onclick=()=>{
+  const lines=state.words.map(w=>`${w.en}=${w.cs}${w.category?'|'+w.category:''}`);
+  document.getElementById('backup-textarea').value=lines.join('\n');
+  document.getElementById('backup-success').textContent=`Exportováno ${lines.length} slovíček. Zkopíruj text a ulož si ho.`;
+  document.getElementById('backup-success').classList.remove('hidden');
+  document.getElementById('backup-error').classList.add('hidden');
+};
+document.getElementById('btn-import').onclick=()=>{
+  const text=document.getElementById('backup-textarea').value.trim();
+  if(!text){document.getElementById('backup-error').textContent='Vlož zálohu do pole výše.';document.getElementById('backup-error').classList.remove('hidden');return;}
+  const parsed=parseBulk(text);
+  if(parsed.length===0){document.getElementById('backup-error').textContent='Žádná validní data.';document.getElementById('backup-error').classList.remove('hidden');return;}
+  showConfirm(`Importovat ${parsed.length} slovíček?`,'Stávající slovíčka zůstanou, přidají se nová.',()=>{
+    let id=state.nextId;
+    parsed.forEach(w=>{if(w.category)getCatColor(w.category);state.words.push({id:id++,en:w.en,cs:w.cs,category:w.category||'',addedDay:state.currentDay,interval:1,nextReviewDay:state.currentDay+1,stats:{seen:0,correct:0}});});
+    state.nextId=id;saveState();updateHome();
+    document.getElementById('backup-success').textContent=`Importováno ${parsed.length} slovíček!`;
+    document.getElementById('backup-success').classList.remove('hidden');
+    document.getElementById('backup-error').classList.add('hidden');
+  });
+};
+
+// ── Practice ──────────────────────────────────────────────────────────────────
+let practiceQueue=[], practiceIdx=0, practiceResults={correct:0,wrong:0}, practiceMode='flashcard', practiceDir='en2cs';
+// Pre-computed QA pairs (for mix, direction is decided per word at queue build)
+let practiceQA=[];
+
+function startPractice(mode, filterCat, direction) {
+  practiceMode=mode; practiceDir=direction;
+  const words=shuffle(getWordsForPractice(filterCat));
+  practiceQueue=words;
+  // Pre-compute QA so mix direction is consistent per word
+  practiceQA=words.map(w=>getQA(w,direction));
+  practiceIdx=0; practiceResults={correct:0,wrong:0};
+  showScreen(mode); renderPracticeStep();
+}
+
+function renderPracticeStep() {
+  const total=practiceQueue.length, pct=(practiceIdx/total*100)+'%';
+  const word=practiceQueue[practiceIdx];
+  const qa=practiceQA[practiceIdx];
+
+  if(practiceMode==='flashcard'){
+    document.getElementById('fc-progress').style.width=pct;
+    const card=document.getElementById('fc-card');
+    // Reset to question side
+    card.classList.remove('flipped');
+    card._showingAnswer=false;
+    document.getElementById('fc-lang').textContent=qa.qLang;
+    document.getElementById('fc-word').textContent=qa.q;
+    document.getElementById('fc-cat').innerHTML=catDotHtml(word.category);
+    document.getElementById('fc-rating').classList.add('hidden');
+    card.onclick=()=>{
+      card._showingAnswer=!card._showingAnswer;
+      if(card._showingAnswer){
+        card.classList.add('flipped');
+        document.getElementById('fc-lang').textContent=qa.aLang;
+        document.getElementById('fc-word').textContent=qa.a;
+        document.getElementById('fc-rating').classList.remove('hidden');
+      } else {
+        card.classList.remove('flipped');
+        document.getElementById('fc-lang').textContent=qa.qLang;
+        document.getElementById('fc-word').textContent=qa.q;
+        // keep rating visible so they can still rate
+      }
+    };
+  } else if(practiceMode==='fill'){
+    document.getElementById('fill-progress').style.width=pct;
+    document.getElementById('fill-prompt-lang').textContent=qa.qLang+' → napište '+qa.aLang;
+    document.getElementById('fill-cs-word').textContent=qa.q;
+    document.getElementById('fill-cat').innerHTML=catDotHtml(word.category);
+    const inp=document.getElementById('fill-input');
+    inp.value='';inp.className='';inp.disabled=false;
+    document.getElementById('fill-feedback').classList.add('hidden');
+    document.getElementById('fill-submit-btn').classList.remove('hidden');
+    document.getElementById('fill-next-btn').classList.add('hidden');
+    setTimeout(()=>inp.focus(),100);
+  } else if(practiceMode==='drag'){
+    document.getElementById('drag-progress').style.width=pct;
+    document.getElementById('drag-prompt-lang').textContent=qa.qLang+' → vyber '+qa.aLang;
+    document.getElementById('drag-question-word').textContent=qa.q;
+    const pool=state.words.filter(w=>w.id!==word.id);
+    const opts=shuffle([word,...shuffle(pool).slice(0,3)]);
+    const grid=document.getElementById('drag-options'); grid.innerHTML='';
+    opts.forEach(opt=>{
+      const btn=document.createElement('button'); btn.className='option-btn';
+      // Show answer side for this option
+      const optQA=getQA(opt, qa.dir==='en2cs'?'en2cs':'cs2en'); // same direction
+      btn.textContent = qa.dir==='en2cs' ? opt.cs : opt.en;
+      btn.onclick=()=>{
+        if(btn.disabled)return;
+        grid.querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+        const correct=opt.id===word.id;
+        btn.classList.add(correct?'correct-opt':'wrong-opt');
+        if(!correct) grid.querySelectorAll('.option-btn').forEach(b=>{if(b.textContent===(qa.dir==='en2cs'?word.cs:word.en)) b.classList.add('correct-opt');});
+        practiceRecord(correct);
+        setTimeout(()=>nextPracticeStep(),900);
+      };
+      grid.appendChild(btn);
+    });
+  }
+}
+
+function practiceRecord(correct){const word=practiceQueue[practiceIdx];updateInterval(word,correct);if(correct)practiceResults.correct++;else practiceResults.wrong++;}
+function nextPracticeStep(){practiceIdx++;if(practiceIdx>=practiceQueue.length)showResults(practiceResults.correct,practiceResults.wrong,practiceQueue.length,[]);else renderPracticeStep();}
+
+document.getElementById('fill-submit-btn').onclick=()=>submitFill(false);
+document.getElementById('fill-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitFill(false);});
+document.getElementById('fill-next-btn').onclick=()=>nextPracticeStep();
+
+function submitFill(isTest){
+  const word=isTest?testQueue[testIdx]:practiceQueue[practiceIdx];
+  const qa=isTest?{a:word.en}:practiceQA[practiceIdx];
+  const inp=document.getElementById(isTest?'test-input':'fill-input');
+  const val=inp.value.trim(); if(!val)return;
+  const correct=val.toLowerCase()===qa.a.toLowerCase();
+  inp.classList.add(correct?'correct':'wrong'); inp.disabled=true;
+  const fb=document.getElementById(isTest?'test-feedback':'fill-feedback'); fb.classList.remove('hidden');
+  fb.innerHTML=correct?'<div style="color:#7ed99a;font-size:18px;text-align:center;margin-bottom:8px">✓ Správně!</div>':`<div style="color:#e07070;text-align:center;margin-bottom:8px">✗ Správně: <strong style="color:#f4c97a">${qa.a}</strong></div>`;
+  if(isTest){testRecord(correct);document.getElementById('test-submit-btn').classList.add('hidden');document.getElementById('test-next-btn').classList.remove('hidden');}
+  else{practiceRecord(correct);document.getElementById('fill-submit-btn').classList.add('hidden');document.getElementById('fill-next-btn').classList.remove('hidden');}
+}
+document.getElementById('fc-wrong').onclick=()=>{practiceRecord(false);nextPracticeStep();};
+document.getElementById('fc-correct').onclick=()=>{practiceRecord(true);nextPracticeStep();};
+
+// ── Test ──────────────────────────────────────────────────────────────────────
+let testQueue=[], testIdx=0, testResults=[];
+function startTest(filterCat){
+  const words=filterCat?state.words.filter(w=>w.category===filterCat):state.words;
+  testQueue=shuffle(words); testIdx=0; testResults=[]; showScreen('test'); renderTestStep();
+}
+function renderTestStep(){
+  const total=testQueue.length;
+  document.getElementById('test-title').textContent=`Test (${testIdx+1}/${total})`;
+  document.getElementById('test-progress').style.width=(testIdx/total*100)+'%';
+  const word=testQueue[testIdx];
+  document.getElementById('test-cs-word').textContent=word.cs;
+  document.getElementById('test-cat').innerHTML=catDotHtml(word.category);
+  const inp=document.getElementById('test-input');inp.value='';inp.className='';inp.disabled=false;
+  document.getElementById('test-feedback').classList.add('hidden');
+  document.getElementById('test-submit-btn').classList.remove('hidden');
+  document.getElementById('test-next-btn').classList.add('hidden');
+  setTimeout(()=>inp.focus(),100);
+}
+document.getElementById('test-submit-btn').onclick=()=>submitFill(true);
+document.getElementById('test-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitFill(true);});
+document.getElementById('test-next-btn').onclick=()=>{testIdx++;if(testIdx>=testQueue.length){const c=testResults.filter(r=>r.correct).length;showResults(c,testResults.length-c,testResults.length,testResults.filter(r=>!r.correct));}else renderTestStep();};
+function testRecord(correct){const word=testQueue[testIdx];updateInterval(word,correct);testResults.push({word,correct});}
+
+// ── Results ───────────────────────────────────────────────────────────────────
+function showResults(correct,wrong,total,wrongWords){
+  const pct=Math.round(correct/total*100);
+  document.getElementById('res-score').textContent=pct+'%';
+  document.getElementById('res-detail').innerHTML=`<span class="color-green">✓ ${correct}</span>  <span class="color-red">✗ ${wrong}</span>  <span class="color-muted">/ ${total}</span>`;
+  const list=document.getElementById('res-wrong-list');
+  if(wrongWords.length>0){list.innerHTML='<div class="section-label" style="padding:16px 20px 8px">ŠPATNĚ ZODPOVĚZENÁ</div>'+wrongWords.map(r=>`<div class="wrong-row" style="margin:0 20px 8px"><span class="color-gold">${r.word.en}</span> <span class="color-muted">=</span> ${r.word.cs}${r.word.category?` <span style="color:#5a4a30">· ${r.word.category}</span>`:''}</div>`).join('');}
+  else list.innerHTML='<div style="color:#7ed99a;text-align:center;padding:16px">Žádné chyby! 🎉</div>';
+  showScreen('results');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function renderStats(filterCat){
+  const cats=getCategories();
+  const fw=document.getElementById('stats-filter');fw.innerHTML='';
+  if(cats.length>0){
+    const all=document.createElement('button');all.className='filter-pill'+(filterCat===null?' active':'');all.textContent='Vše';all.onclick=()=>renderStats(null);fw.appendChild(all);
+    cats.forEach(cat=>{const p=document.createElement('button');p.className='filter-pill'+(filterCat===cat?' active':'');p.innerHTML=`<div class="pill-dot" style="background:${getCatColor(cat)}"></div>${cat}`;p.onclick=()=>renderStats(cat);fw.appendChild(p);});
+  }
+  let words=filterCat?state.words.filter(w=>w.category===filterCat):state.words;
+  const sorted=[...words].filter(w=>w.stats.seen>0).sort((a,b)=>(a.stats.correct/a.stats.seen)-(b.stats.correct/b.stats.seen));
+  const el=document.getElementById('stats-content');
+  if(sorted.length===0){el.innerHTML='<div style="color:#9a8a70;text-align:center;padding:40px">Zatím žádná data. Procvičuj!</div>';return;}
+  el.innerHTML='<div class="section-label" style="padding:16px 20px 8px">NEJPROBLEMATIČTĚJŠÍ SLOVA</div>'+sorted.map(w=>{
+    const pct=Math.round(w.stats.correct/w.stats.seen*100);
+    const color=pct<50?'#e07070':pct<80?'#f4c97a':'#7ed99a';
+    return `<div class="stat-row"><div class="stat-word">${w.category?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getCatColor(w.category)}"></span>`:''}<span class="color-gold">${w.en}</span><span class="color-muted"> = ${w.cs}</span></div><div class="stat-bar-wrap"><div class="stat-bar" style="width:${pct}%;background:${color}"></div></div><div class="stat-pct">${pct}%</div></div>`;
+  }).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+getCategories().forEach(c=>getCatColor(c));
+updateHome();
+</script>
+</body>
+</html>
